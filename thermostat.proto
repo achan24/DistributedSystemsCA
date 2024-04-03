@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package thermostatPackage;
+
+service Room {
+  rpc createRoom(Room) returns (Room);
+  rpc getRooms(Void) returns (Rooms);
+  rpc getRoomStream(Void) returns (stream Room);
+  //return back a stream of Rooms
+  //one item at a time
+  //client has to call item
+  //server has to map it
+};
+
+message Void {}
+
+message Room {
+  string name = 1;
+  int32 temp = 2;
+  int32 targetTemp = 3;
+}
+
+message Rooms {
+  repeated TodoItem items = 1; //repeated array
+}
