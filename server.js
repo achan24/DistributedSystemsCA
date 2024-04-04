@@ -8,10 +8,31 @@ const thermostatProto = grpc.loadPackageDefinition(packageDefinition);
 
 const server = new grpc.Server();
 
+const rooms = [];
+
 // gRPC service methods
 const roomService = {
   createRoom: (call, callback) => {
-   
+    const roomData = call.request //Room name will be passed by the client
+
+    console.log('Creating room: ', roomData)
+
+    //create a new room
+    const newRoom = {
+      name: roomData.name,
+      currentTemp: Math.round(Math.random() * (15 - 5) + 5),
+      targetTemp: null,
+    }
+    rooms.push(newRoom) // add to array
+    console.log(newRoom)
+    console.log(rooms)
+
+    const response = {
+      success: true,
+      message: 'Room created successfully',
+    }
+
+   callback(null, response)
   },
   getRooms: (call, callback) => {
    

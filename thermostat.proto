@@ -3,7 +3,7 @@ syntax = "proto3";
 package thermostatPackage;
 
 service RoomService {
-  rpc createRoom(Room) returns (Room);
+  rpc createRoom(RoomName) returns (Void);
   rpc getRooms(Void) returns (Rooms);
   rpc getRoomsStream(Void) returns (stream Room);
   //return back a stream of Rooms
@@ -14,9 +14,13 @@ service RoomService {
 
 message Void {}
 
+message RoomName {
+  string name = 1;
+}
+
 message Room {
   string name = 1;
-  int32 temp = 2;
+  int32 currentTemp = 2;
   int32 targetTemp = 3;
 }
 
