@@ -4,6 +4,7 @@ package thermostatPackage;
 
 service RoomService {
   rpc createRoom(RoomName) returns (Void);
+  rpc setTempRoom(SetTempRequest) returns(Void);
   rpc getRooms(Void) returns (Rooms);
   rpc getRoomsStream(Void) returns (stream Room);
   //return back a stream of Rooms
@@ -24,6 +25,10 @@ message Room {
   int32 targetTemp = 3;
 }
 
+message SetTempRequest {
+  string name = 1;
+  int32 targetTemp = 2;
+}
 message Rooms {
   repeated Room items = 1; //repeated array
 }

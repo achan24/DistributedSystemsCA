@@ -34,6 +34,22 @@ const roomService = {
 
    callback(null, response)
   },
+  setTempRoom: ({ request }, callback) => {
+    const roomName = request.name
+    const targetTemp = request.targetTemp
+
+    const roomIndex = rooms.findIndex(room => room.name === roomName)
+    console.log(rooms)
+    console.log(roomName + " " + targetTemp + " " + roomIndex)
+
+    if(roomIndex !== -1) {
+      console.log('Found room and changing temp')
+      rooms[roomIndex].targetTemp = targetTemp;
+    } else {
+      console.error(`Room ${roomName} not found`)
+    }
+    callback(null)
+  },
   getRooms: (call, callback) => {
    
   },
@@ -48,9 +64,7 @@ const roomService = {
 
 // Add gRPC service to the server
 server.addService(thermostatProto.thermostatPackage.RoomService.service, roomService);
-// server.addService(thermostatProto.thermostatPackage.RoomService.service, {
-//   getRoomsStream: getRoomsStream,
-// });
+
 
 // Bind the server to a port and start listening for RPC requests
 server.bindAsync("127.0.0.1:50051", grpc.ServerCredentials.createInsecure(), (error, port) => {

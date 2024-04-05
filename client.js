@@ -14,11 +14,7 @@ const client = new thermostatProto.thermostatPackage.RoomService (
   grpc.credentials.createInsecure()
 )
 
-// const readline = require('readline').createInterface({
-//   input: process.stdin,
-//   output: process.stdout
-// });
-
+// main function and menu
 async function main() {
   console.log("\n***************************************")
   console.log("  Welcome to the Smart Thermostat app  ")
@@ -39,6 +35,7 @@ async function main() {
 
     action = parseInt(action)
     if (action === 1) {
+      //Unary grpc call
       let roomName = readlineSync.question("Create new rooom name: ")
       try {
         await createRoom(roomName)
@@ -51,20 +48,23 @@ async function main() {
     } else if (action === 2) {
       //Set temperature for a room
       //Means you need to get a list of all rooms available
-      console.log("Option 2");
-
-
+      console.log("Set Target Temp for a Room");
+      const rooms = await getAllRooms()
+      let roomNumber = readlineSync.question("Select a room number: ")
+      //now I want to edit a room
+      //the number is going to be numnber - 1
+      //get the name
+      //send it back to the server
+      let targetTemp = readlineSync.question("Select a temperature: ")
+      //then call the function to change the target temp for a room
+      let roomName = rooms[roomNumber-1].name
+      console.log("Room selected: " + roomName + " target temp:" + targetTemp)
+      await setTemp(roomName, targetTemp)
     } else if (action === 3) {
       console.log("Get List of all Rooms");
       //Get a list of all rooms available
       //Do this one first
-      try {
-        const rooms = await getRooms()
-        console.log(rooms)
-
-      } catch (e) {
-          console.log("An error occured in option 3");
-      }
+      await getAllRooms()
       
 
     } else if (action === 4) {
@@ -73,6 +73,7 @@ async function main() {
 
     } else if (action == 5) {
       menu = false
+      break;
     } else {
       console.log("Error:Operationnotrecognized")
     }
@@ -85,6 +86,7 @@ async function createRoom(roomName) {
   })
 }
 
+//Server streaming grpc call
 async function getRooms() {
   return new Promise((resolve, reject) => {
     const call = client.getRoomsStream()
@@ -102,6 +104,36 @@ async function getRooms() {
     })
   })
 
+}
+
+async function getAllRooms() {
+  try {
+    const rooms = await getRooms()
+    //console.log(rooms)
+    let index = 1
+    for(const room of rooms) {
+      console.log(index + " - " + room.name + "  Current Temp: " + room.currentTemp + " C" + " Target Temp: " + (room.targetTemp==undefined?"none":room.targetTemp + " C"))
+      index++
+    }
+    return rooms
+  } catch (e) {
+      console.log("An error occured in option 3");
+  }
+}
+
+async function setTemp(roomName, temp) {
+  return new Promise((resolve, reject) => {
+    console.log("sending roomname " + roomName + " temp: " + temp)
+    client.setTempRoom({name: roomName.toString(), targetTemp: temp}, (err, res) => {
+      if(err) {
+        console.error('Error setting temperature', err)
+        reject(err)
+      } else {
+        console.log("Tempearture set successfully")
+        resolve(res)
+      }
+    })
+  })
 }
 
 main()
