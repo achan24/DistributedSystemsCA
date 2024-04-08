@@ -32,8 +32,13 @@ async function main() {
       + "4 - Chat or note feature\n"
       + "5 - Exit\n"
     )
-
-    action = parseInt(action)
+    //Error handling
+    try {
+      action = parseInt(action)
+    } catch(e) {
+      console.log("Please enter a valid choice.")
+      continue
+    }
     if (action === 1) {
       //Unary grpc call
       let roomName = readlineSync.question("Create new rooom name: ")
@@ -50,14 +55,43 @@ async function main() {
       //Means you need to get a list of all rooms available
       console.log("Set Target Temp for a Room");
       const rooms = await getAllRooms()
-      let roomNumber = readlineSync.question("Select a room number: ")
-      //now I want to edit a room
-      //the number is going to be numnber - 1
-      //get the name
-      //send it back to the server
-      let targetTemp = readlineSync.question("Select a temperature: ")
-      //then call the function to change the target temp for a room
+
+      //both inputs must be numbers
+      //room number must be within the rooms size
+      let roomNumber 
+      let targetTemp 
+      while(true) {
+        try {
+          roomNumber = readlineSync.question("Select a room number: ")
+          //now I want to edit a room
+          //the number is going to be numnber - 1
+          //get the name
+          //send it back to the server
+          targetTemp = readlineSync.question("Select a temperature: ")
+          //then call the function to change the target temp for a room
+          roomNumber = parseInt(roomNumber)
+          targetTemp = parseInt(targetTemp)
+          console.log(typeof(roomNumber))
+          console.log(typeof(targetTemp))
+          console.log(roomNumber)
+          console.log(targetTemp)
+
+          if(isNaN(roomNumber) || isNaN(targetTemp)) {
+            console.log("Please enter valid numbers")
+            continue
+          }
+
+          // if(typeof(roomNumber) === 'number' && typeof(targetTemp) === 'number')
+          //   break
+          // console.log("Please enter valid numbers")
+        } catch(e) {
+          console.log("Exception")
+        }
+      }
       let roomName = rooms[roomNumber-1].name
+      console.log(roomName)
+      roomNumber = roomNumber.toString()
+      targetTemp = targetTemp.toString()
       console.log("Room selected: " + roomName + " target temp:" + targetTemp)
       await setTemp(roomName, targetTemp)
     } else if (action === 3) {
