@@ -5,8 +5,9 @@ package thermostatPackage;
 service RoomService {
   rpc createRoom(RoomName) returns (Void);
   rpc setTempRoom(SetTempRequest) returns(Void);
-  rpc getRooms(Void) returns (Rooms);
+  //rpc getRooms(Void) returns (Rooms);
   rpc getRoomsStream(Void) returns (stream Room);
+  rpc setRoomsTempStream(stream SetTempRequest) returns (Void);
   //return back a stream of Rooms
   //one item at a time
   //client has to call item

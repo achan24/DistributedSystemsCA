@@ -39,8 +39,8 @@ const roomService = {
     const targetTemp = request.targetTemp
 
     const roomIndex = rooms.findIndex(room => room.name === roomName)
-    console.log(rooms)
-    console.log(roomName + " " + targetTemp + " " + roomIndex)
+    //console.log(rooms)
+    //console.log(roomName + " " + targetTemp + " " + roomIndex)
 
     if(roomIndex !== -1) {
       console.log('Found room and changing temp')
@@ -50,15 +50,27 @@ const roomService = {
     }
     callback(null)
   },
-  getRooms: (call, callback) => {
+  // getRooms: (call, callback) => {
    
-  },
+  // },
   getRoomsStream: (call, callback) => {
    rooms.forEach(room => {
     call.write(room)
    })
    call.end()
-  }
+  },
+  setRoomsTempStream: ((call, callback) => {
+    call.on('data', (request) => {
+      console.log('Received temperature request:', request);
+      // Test to check if request is received
+
+    });
+  
+    call.on('end', () => {
+      console.log('Stream ended');
+      callback(null)
+    });
+  })
 };
 
 

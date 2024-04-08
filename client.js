@@ -29,8 +29,9 @@ async function main() {
       + "1 - Create a new room\n"
       + "2 - Set a temperature for a room\n"
       + "3 - Get all rooms\n"
-      + "4 - Chat or note feature\n"
-      + "5 - Exit\n"
+      + "4 - Set temp of all rooms\n"
+      + "5 - Chat or note feature\n"
+      + "6 - Exit\n"
     )
     //Error handling
     try {
@@ -55,6 +56,7 @@ async function main() {
       //Means you need to get a list of all rooms available
       console.log("Set Target Temp for a Room");
       const rooms = await getAllRooms()
+      displayRooms(rooms)
 
       //both inputs must be numbers
       //room number must be within the rooms size
@@ -71,41 +73,59 @@ async function main() {
           //then call the function to change the target temp for a room
           roomNumber = parseInt(roomNumber)
           targetTemp = parseInt(targetTemp)
-          console.log(typeof(roomNumber))
-          console.log(typeof(targetTemp))
-          console.log(roomNumber)
-          console.log(targetTemp)
-
+          
           if(isNaN(roomNumber) || isNaN(targetTemp)) {
             console.log("Please enter valid numbers")
             continue
           }
 
-          // if(typeof(roomNumber) === 'number' && typeof(targetTemp) === 'number')
-          //   break
-          // console.log("Please enter valid numbers")
+          break
         } catch(e) {
           console.log("Exception")
         }
       }
       let roomName = rooms[roomNumber-1].name
-      console.log(roomName)
+      //console.log(roomName)
       roomNumber = roomNumber.toString()
       targetTemp = targetTemp.toString()
-      console.log("Room selected: " + roomName + " target temp:" + targetTemp)
+      //console.log("Room selected: " + roomName + " target temp:" + targetTemp)
       await setTemp(roomName, targetTemp)
     } else if (action === 3) {
       console.log("Get List of all Rooms");
       //Get a list of all rooms available
       //Do this one first
-      await getAllRooms()
+      const rooms = await getAllRooms()
+      displayRooms(rooms)
       
 
     } else if (action === 4) {
+      //Set temperature of all rooms
       console.log("Option 4");
+      const rooms = await getAllRooms()
+      const numRooms = rooms.length
+      let choice
+      while(true) {
+        choice = readlineSync.question("Set all rooms the same temperature? y/n ")
+        if(choice.toLowerCase() == "y" || choice.toLowerCase() == "n") {
+          break;
+        }
+      }
+      console.log("choice is " + choice)
 
+      switch(choice) {
+        case "y":
+          //send same number repeatedly
+          setRoomsSameTemp(20, rooms)
+          await getAllRooms() //need to figure this out - clearing the waiting
+          break
+        case "n":
+          //send each room temp individually
+          break
+        default:
+          break
+      }
 
-    } else if (action == 5) {
+    } else if (action == 6) {
       menu = false
       break;
     } else {
@@ -143,31 +163,80 @@ async function getRooms() {
 async function getAllRooms() {
   try {
     const rooms = await getRooms()
-    //console.log(rooms)
-    let index = 1
-    for(const room of rooms) {
-      console.log(index + " - " + room.name + "  Current Temp: " + room.currentTemp + " C" + " Target Temp: " + (room.targetTemp==undefined?"none":room.targetTemp + " C"))
-      index++
-    }
     return rooms
   } catch (e) {
-      console.log("An error occured in option 3");
+      console.log("An error occured in retreiving rooms");
+  }
+}
+
+function displayRooms(rooms) {
+  let index = 1
+  for(const room of rooms) {
+    console.log(index + " - " + room.name + "  Current Temp: " + room.currentTemp + " C" + " Target Temp: " + (room.targetTemp==undefined?"none":room.targetTemp + " C"))
+    index++
   }
 }
 
 async function setTemp(roomName, temp) {
   return new Promise((resolve, reject) => {
-    console.log("sending roomname " + roomName + " temp: " + temp)
+    //console.log("sending roomname " + roomName + " temp: " + temp)
     client.setTempRoom({name: roomName.toString(), targetTemp: temp}, (err, res) => {
       if(err) {
         console.error('Error setting temperature', err)
         reject(err)
       } else {
-        console.log("Tempearture set successfully")
+        console.log("Temperature set successfully")
         resolve(res)
       }
     })
   })
+}
+
+function setRoomsSameTemp(temp, rooms) {
+  try {
+
+    const stream = client.setRoomsTempStream((err, response) => {
+      if (err)
+        console.error('Error:', err);
+    });
+
+    // const temperatureRequests = [
+    //   { room_name: 'Living Room', target_temp: 22 },
+    //   { room_name: 'Bedroom', target_temp: 20 },
+    // ];
+    
+    console.log(rooms)
+
+    rooms.forEach(room => {
+      room.targetTemp = temp
+    })
+    
+    
+    
+    rooms.forEach(room => {
+      
+      const data = {
+        name: room.name,
+        targetTemp: room.targetTemp
+      }
+      console.log(data)
+      stream.write(data)
+    })
+
+    stream.end();
+
+    // stream.on('ready', () => {
+      
+
+      
+    // });
+  
+    
+
+  } catch(e) {
+    console.log(e)
+  }
+
 }
 
 main()
