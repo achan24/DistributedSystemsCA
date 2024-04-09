@@ -8,6 +8,8 @@ const thermostatProto = grpc.loadPackageDefinition(packageDefinition);
 
 const server = new grpc.Server();
 
+const axios = require('axios');
+
 const rooms = [];
 
 // gRPC service methods
@@ -80,6 +82,30 @@ const roomService = {
 };
 
 
+function simulateTemperatureChange() {
+  setInterval(() => {
+      rooms.forEach(room => {
+        if (room.currentTemp < room.targetTemp) {
+          room.currentTemp = room.currentTemp + 1
+          console.log(`Increasing room ${room.name} temperature by 1 to ${room.currentTemp}`)
+        }
+      
+
+        // if (checkRoomTemperature(room)) {
+        //   const message = {
+        //       sender: 'Server',
+        //       message: `Room ${room.name} has reached its target temperature.`
+        //   };
+
+        //   // Broadcast the message to all clients
+        //   for (const client of clients) {
+        //       client.write(message);
+        //   }
+        //}
+      })
+  }, 10000) // Increase temperature every 10 seconds - for time purposes
+}
+
 // Add gRPC service to the server
 server.addService(thermostatProto.thermostatPackage.RoomService.service, roomService);
 
@@ -93,3 +119,29 @@ server.bindAsync("127.0.0.1:50051", grpc.ServerCredentials.createInsecure(), (er
   console.log(`Server is now listening on ${port}`);
   server.start();
 });
+
+simulateTemperatureChange()
+
+
+async function fetchQuotes(apiUrl) {
+  try {
+    const response = await axios.get(apiUrl)
+    return response.data[0];
+  } catch (error) {
+    console.error('Error fetching quotes:', error.message);
+    throw error
+  }
+}
+
+// API URL
+const apiUrl = 'https://zenquotes.io/api/quotes/'
+
+// Fetch quotes
+fetchQuotes(apiUrl)
+  .then(quotes => {
+    console.log('Quotes:', quotes)
+    //do something with quotes
+  })
+  .catch(error => {
+    console.log('Failed to fetch quotes:', error.message)
+  });

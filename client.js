@@ -8,6 +8,9 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH);
 const thermostatProto = grpc.loadPackageDefinition(packageDefinition);
 const readlineSync = require('readline-sync');
 
+const http = require('http');
+const axios = require('axios');
+
 // create a client instance
 const client = new thermostatProto.thermostatPackage.RoomService (
   "localhost:50051",
@@ -30,7 +33,7 @@ async function main() {
       + "2 - Set a temperature for a room\n"
       + "3 - Get all rooms\n"
       + "4 - Set temp of all rooms\n"
-      + "5 - Chat or note feature\n"
+      + "5 - Chat echo feature\n"
       + "6 - Exit\n"
     )
     //Error handling
@@ -248,13 +251,6 @@ function setRoomsSameTemp(temp, rooms) {
     })
 
     stream.end();
-
-    // stream.on('ready', () => {
-      
-
-      
-    // });
-  
     
 
   } catch(e) {
@@ -262,5 +258,45 @@ function setRoomsSameTemp(temp, rooms) {
   }
 
 }
+
+const app = express();
+
+async function getBestAnagram(letters) {
+  try {
+    const response = await axios.get(`http://www.anagramica.com/best/${letters}`);
+    console.log("Trying to get api")
+    return response.data;
+  } catch (error) {
+    console.log('Problem fetching api data.');
+  }
+}
+
+// Define a route for retrieving the best anagram
+app.get('/best/:letters', async (req, res) => {
+  const { letters } = req.params;
+  try {
+    const result = await getBestAnagram(letters);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
+
+(async () => {
+  try {
+    const letters = 'listen';
+    const result = await getBestAnagram(letters);
+    console.log('Best anagram:', result);
+  } catch (error) {
+    console.error(error.message);
+  }
+})();
+
+
 
 main()
