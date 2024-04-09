@@ -64,6 +64,12 @@ const roomService = {
       console.log('Received temperature request:', request);
       // Test to check if request is received
 
+      // Check if room exists and set it to that temperature
+      // Iterate through the rooms
+      rooms.forEach(room => {
+        if(room.name == request.name)
+          room.targetTemp = request.targetTemp
+      })
     });
   
     call.on('end', () => {

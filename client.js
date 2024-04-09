@@ -118,8 +118,39 @@ async function main() {
           setRoomsSameTemp(20, rooms)
           await getAllRooms() //need to figure this out - clearing the waiting
           break
+
         case "n":
+          const stream = client.setRoomsTempStream((err, response) => {
+            if (err)
+              console.error('Error:', err);
+          });
           //send each room temp individually
+          //loop through the rooms and set each temperature individually
+          rooms.forEach(room => {
+            while(true) {
+              try {
+                let temp = readlineSync.question(`Room: ${room.name} Set temp: `)
+                let tempNumber = parseInt(temp)
+                if(!isNaN(tempNumber)) {
+                  //set the target temp
+                  room.targetTemp = tempNumber
+                  const data = {
+                    name: room.name,
+                    targetTemp: room.targetTemp
+                  }
+                  //console.log(data)
+                  stream.write(data)
+                  break
+                }
+              } catch(e) {
+                console.log(e)
+                continue
+              }
+
+            }
+          })
+
+          stream.end();
           break
         default:
           break
@@ -199,19 +230,12 @@ function setRoomsSameTemp(temp, rooms) {
       if (err)
         console.error('Error:', err);
     });
-
-    // const temperatureRequests = [
-    //   { room_name: 'Living Room', target_temp: 22 },
-    //   { room_name: 'Bedroom', target_temp: 20 },
-    // ];
     
-    console.log(rooms)
+    //console.log(rooms)
 
     rooms.forEach(room => {
       room.targetTemp = temp
     })
-    
-    
     
     rooms.forEach(room => {
       
@@ -219,7 +243,7 @@ function setRoomsSameTemp(temp, rooms) {
         name: room.name,
         targetTemp: room.targetTemp
       }
-      console.log(data)
+      //console.log(data)
       stream.write(data)
     })
 
