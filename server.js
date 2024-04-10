@@ -26,8 +26,8 @@ const roomService = {
       targetTemp: null,
     }
     rooms.push(newRoom) // add to array
-    console.log(newRoom)
-    console.log(rooms)
+    //console.log(newRoom)
+    //console.log(rooms)
 
     const response = {
       success: true,
@@ -41,8 +41,6 @@ const roomService = {
     const targetTemp = request.targetTemp
 
     const roomIndex = rooms.findIndex(room => room.name === roomName)
-    //console.log(rooms)
-    //console.log(roomName + " " + targetTemp + " " + roomIndex)
 
     if(roomIndex !== -1) {
       console.log('Found room and changing temp')
@@ -52,15 +50,15 @@ const roomService = {
     }
     callback(null)
   },
-  // getRooms: (call, callback) => {
-   
-  // },
+
+
   getRoomsStream: (call, callback) => {
    rooms.forEach(room => {
     call.write(room)
    })
    call.end()
   },
+
   setRoomsTempStream: ((call, callback) => {
     call.on('data', (request) => {
       console.log('Received temperature request:', request);
@@ -78,7 +76,34 @@ const roomService = {
       console.log('Stream ended');
       callback(null)
     });
+  }),
+  chat: ((call, callback) => {
+    call.on('data', message => {
+      //console.log("Client: ", message.message)
+      //using 
+      try {
+        // Fetch quotes from the API
+        fetchQuotes()
+          .then(quotes => {
+            const { q: quote, a: author } = quotes
+            call.write({ message: `${quote}  ${author}` });
+          })
+
+        // Extract quote and author from the quotes object
+//        const { q: quote, a: author } = quotes;
+        // Send the quote and author as the server message
+//        call.write({ message: `Quote: ${quote}, Author: ${author}` });
+      } catch(e) {
+        console.error(e)
+      }
+
+    })
+
+    call.on('end', () => {
+      call.end();
+    })
   })
+
 };
 
 
@@ -117,31 +142,28 @@ server.bindAsync("127.0.0.1:50051", grpc.ServerCredentials.createInsecure(), (er
     return;
   }
   console.log(`Server is now listening on ${port}`);
-  server.start();
 });
 
 simulateTemperatureChange()
 
 
-async function fetchQuotes(apiUrl) {
+//Chat functionality
+async function fetchQuotes() {
+  const apiUrl = 'https://zenquotes.io/api/quotes/'
   try {
     const response = await axios.get(apiUrl)
-    return response.data[0];
-  } catch (error) {
-    console.error('Error fetching quotes:', error.message);
+    return response.data[0]
+  } catch (err) {
+    console.error('Error fetching quotes:', err.message)
     throw error
   }
 }
 
-// API URL
-const apiUrl = 'https://zenquotes.io/api/quotes/'
-
 // Fetch quotes
-fetchQuotes(apiUrl)
+fetchQuotes()
   .then(quotes => {
     console.log('Quotes:', quotes)
-    //do something with quotes
   })
-  .catch(error => {
-    console.log('Failed to fetch quotes:', error.message)
+  .catch(err => {
+    console.log('Quote server down: ', err.message)
   });

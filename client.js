@@ -8,8 +8,6 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH);
 const thermostatProto = grpc.loadPackageDefinition(packageDefinition);
 const readlineSync = require('readline-sync');
 
-const http = require('http');
-const axios = require('axios');
 
 // create a client instance
 const client = new thermostatProto.thermostatPackage.RoomService (
@@ -28,12 +26,12 @@ async function main() {
 
   while(menu) {
     var action = readlineSync.question(
-      "Please choose from the menu below:\n"
+      "\nPlease choose from the menu below:\n"
       + "1 - Create a new room\n"
       + "2 - Set a temperature for a room\n"
       + "3 - Get all rooms\n"
       + "4 - Set temp of all rooms\n"
-      + "5 - Chat echo feature\n"
+      + "5 - Chat\n"
       + "6 - Exit\n"
     )
     //Error handling
@@ -153,17 +151,45 @@ async function main() {
             }
           })
 
-          stream.end();
+          stream.end()
           break
         default:
           break
       }
+    } else if (action == 5) {
+      //Bidirectional rpc
+      //Quotes chat feature
+      console.log("Chatbot")
+      console.log("Relax and chat with historys greatest minds")
+      console.log("Type 'exit' to return to menu\n")
+      const stream = client.chat()
 
+      // stream.on('data', message => {
+      //   console.log("Server: ", message.message)
+      // })
+
+      loop = true
+      while(loop)
+        await chatMessage(stream)
+
+      // while(true) {
+      //   clientMsg = readlineSync.question("Client: ")
+      //   if(clientMsg == "exit")
+      //     break
+      //   stream.write( { message: clientMsg} )
+      //   stream.on('data', message => {
+      //     console.log("Server: ", message.message)
+      //   })
+      // }
+
+      stream.end()
+
+      //////////////////////////////
     } else if (action == 6) {
       menu = false
-      break;
+      break
     } else {
-      console.log("Error:Operationnotrecognized")
+      console.log("Please enter a valid selection.")
     }
   }
 }
@@ -171,6 +197,23 @@ async function main() {
 async function createRoom(roomName) {
   client.createRoom({name: roomName}, (err, res) => {
     if(err) throw err
+  })
+}
+
+async function chatMessage(stream) {
+  return new Promise((resolve, reject) => {
+      let clientMsg = readlineSync.question("Client: ")
+      if(clientMsg == "exit") {
+        resolve()
+        loop = false
+        return
+      }
+      stream.write( { message: clientMsg} )
+      
+      stream.once('data', message => {
+        console.log("Server: ", message.message)
+        resolve()
+      })
   })
 }
 
@@ -213,7 +256,7 @@ function displayRooms(rooms) {
 
 async function setTemp(roomName, temp) {
   return new Promise((resolve, reject) => {
-    //console.log("sending roomname " + roomName + " temp: " + temp)
+
     client.setTempRoom({name: roomName.toString(), targetTemp: temp}, (err, res) => {
       if(err) {
         console.error('Error setting temperature', err)
@@ -259,43 +302,6 @@ function setRoomsSameTemp(temp, rooms) {
 
 }
 
-const app = express();
-
-async function getBestAnagram(letters) {
-  try {
-    const response = await axios.get(`http://www.anagramica.com/best/${letters}`);
-    console.log("Trying to get api")
-    return response.data;
-  } catch (error) {
-    console.log('Problem fetching api data.');
-  }
-}
-
-// Define a route for retrieving the best anagram
-app.get('/best/:letters', async (req, res) => {
-  const { letters } = req.params;
-  try {
-    const result = await getBestAnagram(letters);
-    res.json(result);
-  } catch (error) {
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
-
-(async () => {
-  try {
-    const letters = 'listen';
-    const result = await getBestAnagram(letters);
-    console.log('Best anagram:', result);
-  } catch (error) {
-    console.error(error.message);
-  }
-})();
 
 
 
