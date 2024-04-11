@@ -46,7 +46,7 @@ async function main() {
       let roomName = readlineSync.question("Create new rooom name: ")
       try {
         await createRoom(roomName)
-        console.log(`${roomName} created successfully`)
+        console.log(`${roomName} created successfully`) //don't even see this message - maybe use promise
       } catch (e) {
           console.log("An error occured in option 1");
       }
@@ -101,7 +101,8 @@ async function main() {
 
     } else if (action === 4) {
       //Set temperature of all rooms
-      console.log("Option 4");
+      //Using client streaming
+      console.log("Option 4 - Set Temp of all Rooms");
       const rooms = await getAllRooms()
       const numRooms = rooms.length
       let choice
@@ -116,7 +117,17 @@ async function main() {
       switch(choice) {
         case "y":
           //send same number repeatedly
-          setRoomsSameTemp(20, rooms)
+          let temp
+          while(true) {
+            try {
+              temp = readlineSync.question("Set Temp for all rooms: ")
+              if(temp >= 10 && temp <=30)
+                break
+            } catch(e) {
+              console.log("Please set a temperature between 10 and 30")
+            }
+          }
+          setRoomsSameTemp(temp, rooms)
           await getAllRooms() //need to figure this out - clearing the waiting
           break
 
@@ -139,7 +150,6 @@ async function main() {
                     name: room.name,
                     targetTemp: room.targetTemp
                   }
-                  //console.log(data)
                   stream.write(data)
                   break
                 }
@@ -164,26 +174,12 @@ async function main() {
       console.log("Type 'exit' to return to menu\n")
       const stream = client.chat()
 
-      // stream.on('data', message => {
-      //   console.log("Server: ", message.message)
-      // })
-
       loop = true
       while(loop)
         await chatMessage(stream)
 
-      // while(true) {
-      //   clientMsg = readlineSync.question("Client: ")
-      //   if(clientMsg == "exit")
-      //     break
-      //   stream.write( { message: clientMsg} )
-      //   stream.on('data', message => {
-      //     console.log("Server: ", message.message)
-      //   })
-      // }
-
       stream.end()
-
+      await getAllRooms() //clears out blocking function
       //////////////////////////////
     } else if (action == 6) {
       menu = false
@@ -195,9 +191,13 @@ async function main() {
 }
 
 async function createRoom(roomName) {
-  client.createRoom({name: roomName}, (err, res) => {
-    if(err) throw err
+  return new Promise((resolve, reject) => {
+    client.createRoom({name: roomName}, (err, res) => {
+      if(err) reject (err)
+      else resolve(res)
+    })
   })
+  
 }
 
 async function chatMessage(stream) {
@@ -248,8 +248,8 @@ async function getAllRooms() {
 
 function displayRooms(rooms) {
   let index = 1
-  for(const room of rooms) {
-    console.log(index + " - " + room.name + "  Current Temp: " + room.currentTemp + " C" + " Target Temp: " + (room.targetTemp==undefined?"none":room.targetTemp + " C"))
+  for (const room of rooms) {
+    console.log(index + " - " + room.name + "  Current Temp: " + room.currentTemp + " C" + " Target Temp: " + (room.targetTemp==-1?"none":room.targetTemp + " C"))
     index++
   }
 }
@@ -270,8 +270,8 @@ async function setTemp(roomName, temp) {
 }
 
 function setRoomsSameTemp(temp, rooms) {
-  try {
 
+  try {
     const stream = client.setRoomsTempStream((err, response) => {
       if (err)
         console.error('Error:', err);

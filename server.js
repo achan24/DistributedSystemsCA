@@ -1,14 +1,14 @@
-const grpc = require('@grpc/grpc-js');
-const path = require('path');
-const protoLoader = require('@grpc/proto-loader');
-const PROTO_PATH = path.join(__dirname, 'thermostat.proto');
-const packageDefinition = protoLoader.loadSync(PROTO_PATH);
+const grpc = require('@grpc/grpc-js')
+const path = require('path')
+const protoLoader = require('@grpc/proto-loader')
+const PROTO_PATH = path.join(__dirname, 'thermostat.proto')
+const packageDefinition = protoLoader.loadSync(PROTO_PATH)
 
-const thermostatProto = grpc.loadPackageDefinition(packageDefinition);
+const thermostatProto = grpc.loadPackageDefinition(packageDefinition)
 
-const server = new grpc.Server();
+const server = new grpc.Server()
 
-const axios = require('axios');
+const axios = require('axios')
 
 const rooms = [];
 
@@ -18,12 +18,12 @@ const roomService = {
     const roomData = call.request //Room name will be passed by the client
 
     console.log('Creating room: ', roomData)
-
+    
     //create a new room
     const newRoom = {
       name: roomData.name,
       currentTemp: Math.round(Math.random() * (15 - 5) + 5),
-      targetTemp: null,
+      targetTemp: -1,
     }
     rooms.push(newRoom) // add to array
     //console.log(newRoom)
@@ -61,7 +61,7 @@ const roomService = {
 
   setRoomsTempStream: ((call, callback) => {
     call.on('data', (request) => {
-      console.log('Received temperature request:', request);
+      console.log('Received temperature request:', request)
       // Test to check if request is received
 
       // Check if room exists and set it to that temperature
@@ -73,7 +73,7 @@ const roomService = {
     });
   
     call.on('end', () => {
-      console.log('Stream ended');
+      console.log('Client Stream ended')
       callback(null)
     });
   }),
@@ -86,7 +86,7 @@ const roomService = {
         fetchQuotes()
           .then(quotes => {
             const { q: quote, a: author } = quotes
-            call.write({ message: `${quote}  ${author}` });
+            call.write({ message: `${quote}  ${author}` })
           })
 
         // Extract quote and author from the quotes object
@@ -100,6 +100,7 @@ const roomService = {
     })
 
     call.on('end', () => {
+      console.log('Bidirectional Stream ended')
       call.end();
     })
   })
@@ -112,27 +113,15 @@ function simulateTemperatureChange() {
       rooms.forEach(room => {
         if (room.currentTemp < room.targetTemp) {
           room.currentTemp = room.currentTemp + 1
-          console.log(`Increasing room ${room.name} temperature by 1 to ${room.currentTemp}`)
+          console.log(`${room.name} increased in temperature by 1 to ${room.currentTemp}`)
         }
       
-
-        // if (checkRoomTemperature(room)) {
-        //   const message = {
-        //       sender: 'Server',
-        //       message: `Room ${room.name} has reached its target temperature.`
-        //   };
-
-        //   // Broadcast the message to all clients
-        //   for (const client of clients) {
-        //       client.write(message);
-        //   }
-        //}
       })
   }, 10000) // Increase temperature every 10 seconds - for time purposes
 }
 
 // Add gRPC service to the server
-server.addService(thermostatProto.thermostatPackage.RoomService.service, roomService);
+server.addService(thermostatProto.thermostatPackage.RoomService.service, roomService)
 
 
 // Bind the server to a port and start listening for RPC requests
