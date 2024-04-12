@@ -30,176 +30,196 @@ const chatClient = new thermostatProto.thermostatPackage.ChatService(
 async function main() {
   console.log("\n***************************************")
   console.log("  Welcome to the Smart Thermostat app  ")
-  console.log("***************************************\n")
+  console.log("***************************************")
 
 
   menu = true
 
-  while(menu) {
-    var action = readlineSync.question(
-      "\nPlease choose from the menu below:\n"
-      + "1 - Create a new room\n"
-      + "2 - Set a temperature for a room\n"
-      + "3 - Get all rooms\n"
-      + "4 - Set temp of all rooms\n"
-      + "5 - Chat\n"
-      + "6 - Exit\n"
-    )
-    //Error handling
-    try {
-      action = parseInt(action)
-    } catch(e) {
-      console.log("Please enter a valid choice.")
-      continue
+  try {
+    let test = await getAllRooms()
+    //console.log(test)
+    if(test == undefined) {
+      console.log("\nPlease ensure thermostat is on before using app.  Thank you.\n\n")
+      process.exit(1)
     }
-    if (action === 1) {
-      //Unary grpc call
-      let roomName = readlineSync.question("Create new rooom name: ")
-      try {
-        await createRoom(roomName)
-        console.log(`${roomName} created successfully`) //don't even see this message - maybe use promise
-      } catch (e) {
-          console.log("An error occured in option 1");
-      }
-
-
-    } else if (action === 2) {
-      //Set temperature for a room
-      //Means you need to get a list of all rooms available
-      console.log("Set Target Temp for a Room");
-      const rooms = await getAllRooms()
-      displayRooms(rooms)
-
-      //both inputs must be numbers
-      //room number must be within the rooms size
-      let roomNumber 
-      let targetTemp 
-      while(true) {
-        try {
-          roomNumber = readlineSync.question("Select a room number: ")
-          //now I want to edit a room
-          //the number is going to be numnber - 1
-          //get the name
-          //send it back to the server
-          targetTemp = readlineSync.question("Select a temperature: ")
-          //then call the function to change the target temp for a room
-          roomNumber = parseInt(roomNumber)
-          targetTemp = parseInt(targetTemp)
-          
-          if(isNaN(roomNumber) || isNaN(targetTemp)) {
-            console.log("Please enter valid numbers")
-            continue
-          }
-
-          break
-        } catch(e) {
-          console.log("Exception")
-        }
-      }
-      let roomName = rooms[roomNumber-1].name
-      //console.log(roomName)
-      roomNumber = roomNumber.toString()
-      targetTemp = targetTemp.toString()
-      //console.log("Room selected: " + roomName + " target temp:" + targetTemp)
-      await setTemp(roomName, targetTemp)
-    } else if (action === 3) {
-      console.log("Get List of all Rooms");
-      //Get a list of all rooms available
-      //Do this one first
-      const rooms = await getAllRooms()
-      displayRooms(rooms)
+    while(menu) {
       
-
-    } else if (action === 4) {
-      //Set temperature of all rooms
-      //Using client streaming
-      console.log("Option 4 - Set Temp of all Rooms");
-      const rooms = await getAllRooms()
-      const numRooms = rooms.length
-      let choice
-      while(true) {
-        choice = readlineSync.question("Set all rooms the same temperature? y/n ")
-        if(choice.toLowerCase() == "y" || choice.toLowerCase() == "n") {
-          break;
-        }
+      var action = readlineSync.question(
+        //If server down - show that message
+        
+        "\nServer status: " + ( await getAllRooms() == undefined ? "Down" : "Available")
+        + "\nPlease choose from the menu below:\n"
+        + "1 - Create a new room\n"
+        + "2 - Set a temperature for a room\n"
+        + "3 - Get all rooms\n"
+        + "4 - Set temp of all rooms\n"
+        + "5 - Chat\n"
+        + "6 - Exit\n"
+      )
+      //Error handling
+      try {
+        action = parseInt(action)
+      } catch(e) {
+        console.log("Please enter a valid choice.")
+        continue
       }
-      console.log("choice is " + choice)
+      if (action === 1) {
+        //Unary grpc call
+        let roomName = readlineSync.question("Create new rooom name: ")
+        try {
+          await createRoom(roomName)
+          console.log(`${roomName} created successfully`) //don't even see this message - maybe use promise
+        } catch (e) {
+            console.log("An error occured in option 1");
+        }
 
-      switch(choice) {
-        case "y":
-          //send same number repeatedly
-          let temp
-          while(true) {
-            try {
-              temp = readlineSync.question("Set Temp for all rooms: ")
-              if(temp >= 10 && temp <=30)
-                break
-            } catch(e) {
-              console.log("Please set a temperature between 10 and 30")
+
+      } else if (action === 2) {
+        //Set temperature for a room
+        //Means you need to get a list of all rooms available
+        console.log("Set Target Temp for a Room");
+        const rooms = await getAllRooms()
+        displayRooms(rooms)
+
+        //both inputs must be numbers
+        //room number must be within the rooms size
+        let roomNumber 
+        let targetTemp 
+        while(true) {
+          try {
+            roomNumber = readlineSync.question("Select a room number: ")
+            //now I want to edit a room
+            //the number is going to be numnber - 1
+            //get the name
+            //send it back to the server
+            targetTemp = readlineSync.question("Select a temperature(5-30): ")
+            //then call the function to change the target temp for a room
+            roomNumber = parseInt(roomNumber)
+            targetTemp = parseInt(targetTemp)
+            
+            if(isNaN(roomNumber) || isNaN(targetTemp)) {
+              console.log("Please enter valid numbers")
+              continue
             }
+            //input handling
+            if(roomNumber<=0 || roomNumber>rooms.length) {
+              console.log("Please enter a valid room number")
+              displayRooms(rooms)
+              continue
+            }
+            break
+          } catch(e) {
+            console.log("Exception", e)
           }
-          setRoomsSameTemp(temp, rooms)
-          await getAllRooms() //need to figure this out - clearing the waiting
-          break
+        }
+        let roomName = rooms[roomNumber-1].name
+        //console.log(roomName)
+        roomNumber = roomNumber.toString()
+        targetTemp = targetTemp.toString()
+        //console.log("Room selected: " + roomName + " target temp:" + targetTemp)
+        await setTemp(roomName, targetTemp)
+      } else if (action === 3) {
+        console.log("Get List of all Rooms");
+        //Get a list of all rooms available
+        //Do this one first
+        const rooms = await getAllRooms()
+        displayRooms(rooms)
+        
 
-        case "n":
-          const stream = client.setRoomsTempStream((err, response) => {
-            if (err)
-              console.error('Error:', err);
-          });
-          //send each room temp individually
-          //loop through the rooms and set each temperature individually
-          rooms.forEach(room => {
+      } else if (action === 4) {
+        //Set temperature of all rooms
+        //Using client streaming
+        console.log("Option 4 - Set Temp of all Rooms");
+        const rooms = await getAllRooms()
+        const numRooms = rooms.length
+        let choice
+        while(true) {
+          choice = readlineSync.question("Set all rooms the same temperature? y/n ")
+          if(choice.toLowerCase() == "y" || choice.toLowerCase() == "n") {
+            break;
+          }
+        }
+        console.log("choice is " + choice)
+
+        switch(choice) {
+          case "y":
+            //send same number repeatedly
+            let temp
             while(true) {
               try {
-                let temp = readlineSync.question(`Room: ${room.name} Set temp: `)
-                let tempNumber = parseInt(temp)
-                if(!isNaN(tempNumber)) {
-                  //set the target temp
-                  room.targetTemp = tempNumber
-                  const data = {
-                    name: room.name,
-                    targetTemp: room.targetTemp
-                  }
-                  stream.write(data)
+                temp = readlineSync.question("Set Temp for all rooms: ")
+                if(temp >= 10 && temp <=30)
                   break
-                }
               } catch(e) {
-                console.log(e)
-                continue
+                console.log("Please set a temperature between 10 and 30")
               }
-
             }
-          })
+            setRoomsSameTemp(temp, rooms)
+            await getAllRooms() //need to figure this out - clearing the waiting
+            break
 
-          stream.end()
-          break
-        default:
-          break
+          case "n":
+            const stream = client.setRoomsTempStream((err, response) => {
+              if (err)
+                console.error('Error:', err);
+            });
+            //send each room temp individually
+            //loop through the rooms and set each temperature individually
+            rooms.forEach(room => {
+              while(true) {
+                try {
+                  let temp = readlineSync.question(`Room: ${room.name} Set temp: `)
+                  let tempNumber = parseInt(temp)
+                  if(!isNaN(tempNumber)) {
+                    //set the target temp
+                    room.targetTemp = tempNumber
+                    const data = {
+                      name: room.name,
+                      targetTemp: room.targetTemp
+                    }
+                    stream.write(data)
+                    break
+                  }
+                } catch(e) {
+                  console.log(e)
+                  continue
+                }
+
+              }
+            })
+
+            stream.end()
+            break
+          default:
+            break
+        }
+      } else if (action == 5) {
+        //Bidirectional rpc
+        //Quotes chat feature
+        console.log("Chatbot")
+        console.log("Relax and chat with historys greatest minds")
+        console.log("Type 'exit' to return to menu\n")
+        const stream = chatClient.chat()
+
+        loop = true
+        while(loop)
+          await chatMessage(stream)
+
+        stream.end()
+        await getAllRooms() //clears out blocking function
+        //////////////////////////////
+      } else if (action == 6) {
+        menu = false
+        break
+      } else {
+        console.log("Please enter a valid selection.")
       }
-    } else if (action == 5) {
-      //Bidirectional rpc
-      //Quotes chat feature
-      console.log("Chatbot")
-      console.log("Relax and chat with historys greatest minds")
-      console.log("Type 'exit' to return to menu\n")
-      const stream = chatClient.chat()
-
-      loop = true
-      while(loop)
-        await chatMessage(stream)
-
-      stream.end()
-      await getAllRooms() //clears out blocking function
-      //////////////////////////////
-    } else if (action == 6) {
-      menu = false
-      break
-    } else {
-      console.log("Please enter a valid selection.")
     }
+  } catch(err) {
+
   }
 }
+
 
 async function createRoom(roomName) {
   return new Promise((resolve, reject) => {
@@ -253,7 +273,7 @@ async function getAllRooms() {
     const rooms = await getRooms()
     return rooms
   } catch (err) {
-      console.log("An error occured in retreiving rooms", err);
+      console.log("An error occured in retreiving rooms");
   }
 }
 
@@ -314,6 +334,9 @@ function setRoomsSameTemp(temp, rooms) {
 }
 
 
-
-
 main()
+
+
+// main().catch(err => {
+//   console.error("An error occurred while running the Smart Thermostat app:", err);
+// })
