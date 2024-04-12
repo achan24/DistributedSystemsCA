@@ -12,7 +12,7 @@ const axios = require('axios')
 
 const rooms = [];
 
-// gRPC service methods
+// gRPC roomService methods
 const roomService = {
   createRoom: (call, callback) => {
     const roomData = call.request //Room name will be passed by the client
@@ -36,6 +36,16 @@ const roomService = {
 
    callback(null, response)
   },
+
+  getRoomsStream: (call, callback) => {
+   rooms.forEach(room => {
+    call.write(room)
+   })
+   call.end()
+  },
+}
+
+const temperatureService = {
   setTempRoom: ({ request }, callback) => {
     const roomName = request.name
     const targetTemp = request.targetTemp
@@ -50,15 +60,6 @@ const roomService = {
     }
     callback(null)
   },
-
-
-  getRoomsStream: (call, callback) => {
-   rooms.forEach(room => {
-    call.write(room)
-   })
-   call.end()
-  },
-
   setRoomsTempStream: ((call, callback) => {
     call.on('data', (request) => {
       console.log('Received temperature request:', request)
@@ -70,13 +71,16 @@ const roomService = {
         if(room.name == request.name)
           room.targetTemp = request.targetTemp
       })
-    });
+    })
   
     call.on('end', () => {
       console.log('Client Stream ended')
       callback(null)
-    });
+    })
   }),
+}
+
+const chatService = {
   chat: ((call, callback) => {
     call.on('data', message => {
       //console.log("Client: ", message.message)
@@ -101,11 +105,10 @@ const roomService = {
 
     call.on('end', () => {
       console.log('Bidirectional Stream ended')
-      call.end();
+      call.end()
     })
   })
-
-};
+}
 
 
 function simulateTemperatureChange() {
@@ -120,8 +123,10 @@ function simulateTemperatureChange() {
   }, 10000) // Increase temperature every 10 seconds - for time purposes
 }
 
-// Add gRPC service to the server
+// Add gRPC services to the server
 server.addService(thermostatProto.thermostatPackage.RoomService.service, roomService)
+server.addService(thermostatProto.thermostatPackage.TemperatureService.service, temperatureService)
+server.addService(thermostatProto.thermostatPackage.ChatService.service, chatService)
 
 
 // Bind the server to a port and start listening for RPC requests

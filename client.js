@@ -15,6 +15,17 @@ const client = new thermostatProto.thermostatPackage.RoomService (
   grpc.credentials.createInsecure()
 )
 
+const temperatureClient = new thermostatProto.thermostatPackage.TemperatureService(
+  "localhost:50051",
+  grpc.credentials.createInsecure()
+)
+
+const chatClient = new thermostatProto.thermostatPackage.ChatService(
+  "localhost:50051",
+  grpc.credentials.createInsecure()
+)
+
+
 // main function and menu
 async function main() {
   console.log("\n***************************************")
@@ -172,7 +183,7 @@ async function main() {
       console.log("Chatbot")
       console.log("Relax and chat with historys greatest minds")
       console.log("Type 'exit' to return to menu\n")
-      const stream = client.chat()
+      const stream = chatClient.chat()
 
       loop = true
       while(loop)
@@ -241,14 +252,14 @@ async function getAllRooms() {
   try {
     const rooms = await getRooms()
     return rooms
-  } catch (e) {
-      console.log("An error occured in retreiving rooms");
+  } catch (err) {
+      console.log("An error occured in retreiving rooms", err);
   }
 }
 
 function displayRooms(rooms) {
   let index = 1
-  for (const room of rooms) {
+  for(const room of rooms) {
     console.log(index + " - " + room.name + "  Current Temp: " + room.currentTemp + " C" + " Target Temp: " + (room.targetTemp==-1?"none":room.targetTemp + " C"))
     index++
   }
@@ -257,7 +268,7 @@ function displayRooms(rooms) {
 async function setTemp(roomName, temp) {
   return new Promise((resolve, reject) => {
 
-    client.setTempRoom({name: roomName.toString(), targetTemp: temp}, (err, res) => {
+    temperatureClient.setTempRoom({name: roomName.toString(), targetTemp: temp}, (err, res) => {
       if(err) {
         console.error('Error setting temperature', err)
         reject(err)
@@ -272,7 +283,7 @@ async function setTemp(roomName, temp) {
 function setRoomsSameTemp(temp, rooms) {
 
   try {
-    const stream = client.setRoomsTempStream((err, response) => {
+    const stream = temperatureClient.setRoomsTempStream((err, response) => {
       if (err)
         console.error('Error:', err);
     });

@@ -2,17 +2,25 @@ syntax = "proto3";
 
 package thermostatPackage;
 
-//Refactor into three services
+
+// RoomService for managing rooms
 service RoomService {
   rpc createRoom(RoomName) returns (Void);
-  rpc setTempRoom(SetTempRequest) returns(Void);
-  
   rpc getRoomsStream(Void) returns (stream Room);
+};
+
+// TemperatureService for setting room temperatures
+service TemperatureService {
+  rpc setTempRoom(SetTempRequest) returns(Void);
   rpc setRoomsTempStream(stream SetTempRequest) returns (Void);
   //return back a stream of Rooms
   //one item at a time
   //client has to call item
   //server has to map it
+};
+
+// ChatService for handling chat messages
+service ChatService {
   rpc chat(stream ChatMessage) returns (stream ChatMessage);
 };
 
