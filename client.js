@@ -77,8 +77,12 @@ async function main() {
       } else if (action === 2) {
         //Set temperature for a room
         //Means you need to get a list of all rooms available
-        console.log("Set Target Temp for a Room");
         const rooms = await getAllRooms()
+        if(rooms.length == 0) {
+          console.log("No rooms available.")
+          continue
+        }
+        console.log("Set Target Temp for a Room");
         displayRooms(rooms)
 
         //both inputs must be numbers
@@ -123,6 +127,8 @@ async function main() {
         //Get a list of all rooms available
         //Do this one first
         const rooms = await getAllRooms()
+        if(rooms.length == 0)
+          console.log("No rooms connected.")
         displayRooms(rooms)
         
 
@@ -131,12 +137,16 @@ async function main() {
         //Using client streaming
         console.log("Option 4 - Set Temp of all Rooms");
         const rooms = await getAllRooms()
-        const numRooms = rooms.length
+        //Error handling
+        if(rooms.length == 0) {
+          console.log("No rooms connected.")
+          continue
+        }
         let choice
         while(true) {
           choice = readlineSync.question("Set all rooms the same temperature? y/n ")
           if(choice.toLowerCase() == "y" || choice.toLowerCase() == "n") {
-            break;
+            break
           }
         }
         console.log("choice is " + choice)
@@ -159,7 +169,7 @@ async function main() {
             break
 
           case "n":
-            const stream = client.setRoomsTempStream((err, response) => {
+            const stream = temperatureClient.setRoomsTempStream((err, response) => {
               if (err)
                 console.error('Error:', err);
             });
@@ -168,7 +178,7 @@ async function main() {
             rooms.forEach(room => {
               while(true) {
                 try {
-                  let temp = readlineSync.question(`Room: ${room.name} Set temp: `)
+                  let temp = readlineSync.question(`Room: ${room.name} Current Temp: ${room.currentTemp} Set temp: `)
                   let tempNumber = parseInt(temp)
                   if(!isNaN(tempNumber)) {
                     //set the target temp
@@ -199,13 +209,13 @@ async function main() {
         console.log("Chatbot")
         console.log("Relax and chat with historys greatest minds")
         console.log("Type 'exit' to return to menu\n")
-        const stream = chatClient.chat()
+        const chatStream = chatClient.chat()
 
         loop = true
         while(loop)
-          await chatMessage(stream)
+          await chatMessage(chatStream)
 
-        stream.end()
+        chatStream.end()
         await getAllRooms() //clears out blocking function
         //////////////////////////////
       } else if (action == 6) {

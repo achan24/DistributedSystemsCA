@@ -40,9 +40,10 @@ message SetTempRequest {
   string name = 1;
   int32 targetTemp = 2;
 }
-message Rooms {
-  repeated Room items = 1; //repeated array
-}
+
+// message Rooms {//I don't think is even used
+//   repeated Room items = 1; //repeated array
+// }
 
 message ChatMessage {
   string message = 1;

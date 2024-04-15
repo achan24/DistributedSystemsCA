@@ -155,8 +155,8 @@ async function fetchQuotes() {
 
 // Fetch quotes
 fetchQuotes()
-  .then(quotes => {
-    console.log('Quotes:', quotes)
+  .then(() => {
+    console.log('Chat service available')
   })
   .catch(err => {
     console.log('Quote server down: ', err.message)
