@@ -55,6 +55,8 @@ const temperatureService = {
     if(roomIndex !== -1) {
       console.log('Found room and changing temp')
       rooms[roomIndex].targetTemp = targetTemp;
+      if(rooms[roomIndex].targetTemp == -1)
+        cooldown()
     } else {
       console.error(`Room ${roomName} not found`)
     }
@@ -98,7 +100,7 @@ const chatService = {
         // Send the quote and author as the server message
 //        call.write({ message: `Quote: ${quote}, Author: ${author}` });
       } catch(e) {
-        console.error(e)
+        console.error("Error on server chat side")
       }
 
     })
@@ -121,6 +123,10 @@ function simulateTemperatureChange() {
       
       })
   }, 10000) // Increase temperature every 10 seconds - for time purposes
+}
+
+function cooldown() {
+  
 }
 
 // Add gRPC services to the server
@@ -149,7 +155,7 @@ async function fetchQuotes() {
     return response.data[0]
   } catch (err) {
     console.error('Error fetching quotes:', err.message)
-    throw error
+    throw err
   }
 }
 
