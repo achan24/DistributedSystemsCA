@@ -1,12 +1,22 @@
-syntax = "proto3";
+/*
+ * thermostat.proto
+ * Author: Albert Chan
+ * Date: 19/04/2024
+ * Description: Protocol buffer definitions for managing rooms, setting temperatures, and handling chat messages.
+ */
 
-package thermostatPackage;
+
+syntax = "proto3";  //Defines the syntax for the proto file
+
+package thermostatPackage;  //Defines the package name
 
 
 // RoomService for managing rooms
 service RoomService {
-  rpc createRoom(RoomName) returns (Void);
+  rpc createRoom(RoomName) returns (Void); //rpc method to create room
+  //accepts RoomName messages as parameter and returns Void message
   rpc getRoomsStream(Void) returns (stream Room);
+  //accepts Void message as parameter and returns a stream of message type Room
 };
 
 // TemperatureService for setting room temperatures
@@ -24,27 +34,28 @@ service ChatService {
   rpc chat(stream ChatMessage) returns (stream ChatMessage);
 };
 
+//Message that is an empty placeholder
 message Void {}
 
+//RoomName message that contains a single string
 message RoomName {
   string name = 1;
 }
 
+//Room message that contains three values
 message Room {
-  string name = 1;
-  int32 currentTemp = 2;
-  int32 targetTemp = 3;
+  string name = 1;  //String value to store the name of the room
+  int32 currentTemp = 2; //Integer value to store current temperature of room
+  int32 targetTemp = 3; //Integer value to store the target thermostat temperature of room
 }
 
+//SetTempRequest message contains two values
 message SetTempRequest {
-  string name = 1;
-  int32 targetTemp = 2;
+  string name = 1; //String value to store the name of the room
+  int32 targetTemp = 2; //Integer value to store the 
 }
 
-// message Rooms {//I don't think is even used
-//   repeated Room items = 1; //repeated array
-// }
-
+//ChatMessage message contains single value
 message ChatMessage {
-  string message = 1;
+  string message = 1; //String message to pass between client and server
 }
