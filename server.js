@@ -18,7 +18,7 @@ const server = new grpc.Server() //Create a new grpc server
 
 const axios = require('axios') //Import axios for making http requests
 
-const rooms = []; //Create a global variable rooms - to hold list of rooms
+const rooms = [] //Create a global variable rooms - to hold list of rooms
 
 // gRPC roomService methods
 const roomService = {
@@ -73,7 +73,7 @@ const temperatureService = {
     //if room index found meaning is not equal to -1
     if(roomIndex !== -1) {
       console.log('Found room and changing temp') //print message
-      rooms[roomIndex].targetTemp = targetTemp; //set target temperature for that particular room object
+      rooms[roomIndex].targetTemp = targetTemp //set target temperature for that particular room object
       // if(rooms[roomIndex].targetTemp == -1)
       //   cooldown()
     } else { //if room is not found, print error message
@@ -118,7 +118,7 @@ const chatService = {
       try {
         // use Fetch quotes from the API
         fetchQuotes()
-          //retrive quotes
+          //retrieve quotes
           .then(quotes => {
             //destructure quote and author values from quotes object
             const { q: quote, a: author } = quotes
@@ -171,12 +171,12 @@ server.addService(thermostatProto.thermostatPackage.ChatService.service, chatSer
 // Create a server that requires no credentials
 server.bindAsync("127.0.0.1:50051", grpc.ServerCredentials.createInsecure(), (error, port) => { //pass callback function
   if (error) { //if there is an error
-    console.error('Failed to bind server:', error); //print this error message
-    return; //end execution of this function
+    console.error('Failed to bind server:', error) //print this error message
+    return //end execution of this function
   }
   //if there is no error, meaning server is succesfully operating
-  console.log(`Server is now listening on ${port}`); //print success message
-});
+  console.log(`Server is now listening on ${port}`) //print success message
+})
 
 simulateTemperatureChange() //call simulateTemperatureChange function
 // this increases the temperatue when a higher target temperature has been set
@@ -187,19 +187,20 @@ simulateTemperatureChange() //call simulateTemperatureChange function
 async function fetchQuotes() {
   //const apiUrl = 'https://zenquotes.io/api/quotes/'
   try {
+    //set response to data from api
+    //use axios to send a GET request to the API server
     const response = await axios.get('https://zenquotes.io/api/quotes/')
-    return response.data[0]
-  } catch (err) {
+    return response.data[0] //return the first JSON object from the response
+  } catch (err) { //if error occurs during API request, print error message
     console.error('Error fetching quotes:', err.message)
-    //throw err
   }
 }
 
-// Test fetch quote
-fetchQuotes()
-  .then(() => {
-    console.log('Chat service available')
+// Test fetch quotes
+fetchQuotes() //call fetchQuotes method
+  .then(() => { //if no error
+    console.log('Chat service available') //print success message
   })
-  .catch(err => {
-    console.log('Quote server down: ', err.message)
-  });
+  .catch(err => { //else catch error
+    console.log('Quote server down: ', err.message) //print error message
+  })
