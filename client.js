@@ -464,34 +464,36 @@ async function setTemp(roomName, temp) {
   })
 }
 
-function setRoomsSameTemp(temp, rooms) {
+//Synchronous function setRoomsSameTemp
+function setRoomsSameTemp(temp, rooms) { //accepts temperature and rooms array as parameters
 
-  try {
+  try { //try block
+    // create stream by assigning setRoomsTempStream method to stream variable
     const stream = temperatureClient.setRoomsTempStream((err, response) => {
-      if (err)
-        console.error('Error:', err)
+      //callback function
+      if (err) //if error
+        console.error('Error:', err) //print error message
     })
     
 
+    //iterate through each room
     rooms.forEach(room => {
-      room.targetTemp = temp
-    })
-    
-    rooms.forEach(room => {
-      
+
+      //create message to send to server
       const data = {
-        name: room.name,
-        targetTemp: room.targetTemp
+        name: room.name, //set name to room.name
+        targetTemp: temp //set tempTarget to be target temperature
       }
-      //console.log(data)
-      stream.write(data)
+      
+      stream.write(data) //write the message to the stream - sending to server
+
     })
 
-    stream.end()
+    stream.end() //close the stream from the client side
     
 
-  } catch(e) {
-    console.log(e)
+  } catch(err) { //if an error is caught
+    console.error(err) //print error message
   }
 
 }
