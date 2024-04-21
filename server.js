@@ -76,7 +76,6 @@ const temperatureService = {
       console.log('Found room and changing temp') //print message
       rooms[roomIndex].targetTemp = targetTemp //set target temperature for that particular room object
       // if(rooms[roomIndex].targetTemp == -1)
-      //   cooldown()
     } else { //if room is not found, print error message
       console.error(`Room ${roomName} not found`)
     }
@@ -157,9 +156,6 @@ function simulateTemperatureChange() {
   }, 10000) // Increase temperature every 10 seconds - for time purposes
 }
 
-// function cooldown() {
-  
-// }
 
 // Add gRPC services to the server
 server.addService(thermostatProto.thermostatPackage.RoomService.service, roomService)

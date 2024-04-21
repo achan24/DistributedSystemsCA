@@ -15,23 +15,22 @@ package thermostatPackage;  //Defines the package name
 service RoomService {
   rpc createRoom(RoomName) returns (Void); //rpc method to create room
   //accepts RoomName messages as parameter and returns Void message
-  rpc getRoomsStream(Void) returns (stream Room);
+  rpc getRoomsStream(Void) returns (stream Room); //rpc method to get a stream of rooms from the server
   //accepts Void message as parameter and returns a stream of message type Room
 };
 
 // TemperatureService for setting room temperatures
 service TemperatureService {
-  rpc setTempRoom(SetTempRequest) returns(Void);
-  rpc setRoomsTempStream(stream SetTempRequest) returns (Void);
-  //return back a stream of Rooms
-  //one item at a time
-  //client has to call item
-  //server has to map it
+  rpc setTempRoom(SetTempRequest) returns(Void); //rpc method to set temperature of a room
+  //accepts a SetTempRequest message and returns void
+  rpc setRoomsTempStream(stream SetTempRequest) returns (Void); //rpc method to set temperature of many rooms
+  //accepts a stream of SetTempRequest and returns void
 };
 
 // ChatService for handling chat messages
 service ChatService {
-  rpc chat(stream ChatMessage) returns (stream ChatMessage);
+  rpc chat(stream ChatMessage) returns (stream ChatMessage); //rpc method for bidirectional chat
+  //accepts a stream ChatMessage and returns a stream of ChatMessage
 };
 
 //Message that is an empty placeholder
