@@ -57,7 +57,8 @@ const roomService = {
    call.end()
   },
 }
-// gRPC tempearatureService methods
+
+// gRPC temperatureService methods
 const temperatureService = {
   //Unary grpc
   //Set the target temperature for a specific room
@@ -105,7 +106,6 @@ const temperatureService = {
     })
   }),
 }
-
 
 // gRPC chatService methods
 const chatService = {

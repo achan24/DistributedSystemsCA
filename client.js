@@ -74,6 +74,7 @@ async function main() {
       + "5 - Chat\n"
       + "6 - Exit\n"
     )
+
     //Error handling for user selection
     try {
       action = parseInt(action) //attempt to parse string to an integer
@@ -82,8 +83,11 @@ async function main() {
       continue //continue from start of while loop, ie. show the menu again
     }
 
-    //User Menu Options
-    //If user selects option 1
+
+    // User Menu Options /////////////////////////////
+
+    //////////////////////////////////////////////////
+    //User selects option 1 - Connecting a room to app
     if (action === 1) {
       //Unary grpc
       //Assign roomName variable using readline sync, question method
@@ -95,11 +99,11 @@ async function main() {
       } catch (err) {
           console.error("An error occured in option 1") //error message
       }
-
-    //User selects option 2
+    
+    ////////////////////////////////////////////////////////
+    //User selects option 2 - Setting temperature for a room
     } else if (action === 2) {
       //Unary grpc
-      //Set temperature for a room
       //Error handling in case server is down
       try {
         const rooms = await getAllRooms()
@@ -185,7 +189,7 @@ async function main() {
       //send data across as strings
       await setTemp(roomName, targetTemp) //call setTemp function, passing in roomName and targetTemp
 
-
+    ////////////////////////////////////////
     //User selects option 3 - Show all rooms
     } else if (action === 3) {
       //Server Streaming grpc
@@ -206,6 +210,7 @@ async function main() {
         console.log("No rooms connected.")
       displayRooms(rooms)
       
+    //////////////////////////////////////////
     //Option 4 - Set temperature for all rooms
     } else if (action === 4) {
       //Client Streaming grpc
@@ -280,58 +285,66 @@ async function main() {
           //Call setRoomsSameTemp passing temp and rooms variables
           setRoomsSameTemp(temp, rooms)
 
-          await getAllRooms() //need to figure this out - clearing the waiting/blocking
+          await getAllRooms() //clearing the waiting/blocking
           break //end of case block
 
-        case "n": //
+        case "n": //case for setting the temperature of each room individually
+          //initialise a stream for setting room temperatures using client streaming
           const stream = temperatureClient.setRoomsTempStream((err, response) => {
-            if (err)
-              console.error('Error:', err)
+            //callback function to handle errors
+            if (err) // if error
+              console.error('Error:', err) //print error message
           })
           //send each room temp individually
-          //loop through the rooms and set each temperature individually
+          //iterate through each rooms and set each temperature individually
           rooms.forEach(room => {
-            while(true) {
-              try {
+            while(true) { //while loop used for valid input
+              try { //try block to catch errors
+                //assign temp value from user using readlineSync question method
                 let temp = readlineSync.question(`Room: ${room.name} Current Temp: ${room.currentTemp} Set temp: `)
-                let tempNumber = parseInt(temp)
-                if(!isNaN(tempNumber)) {
+                let tempNumber = parseInt(temp) //convert to int
+                if(!isNaN(tempNumber)) { //validate if tempNumber is a number
                   //set the target temp
                   room.targetTemp = tempNumber
-                  const data = {
-                    name: room.name,
-                    targetTemp: room.targetTemp
+                  const data = { //create object/message to send to server
+                    name: room.name, //set name parameter as room.name
+                    targetTemp: room.targetTemp //set the targetTemp parameter as room.targetTemp
                   }
-                  stream.write(data)
-                  break
+                  stream.write(data) //send message as an object using write method
+                  break //break from while loop - meaning successful user data input and sending
                 }
-              } catch(e) {
-                console.log(e)
-                continue
+              } catch(err) { //If error print error
+                console.error("Please set a temperature between 5 and 30, or -1 to turn off")
+                continue //continue while loop to gather valid input
               }
             }
           })
 
-          stream.end()
+          stream.end() //end the stream
           //clears blocking for some reason
           await getAllRooms()
-          break
+          break //end of case block
         default:
-          break
+          console.log("Unknown choice.")
+          break //end of case block
       }
+
+    ///////////////////////////////////////
+    // User selects option 5 - chat feature
     } else if (action == 5) {
-      //Bidirectional rpc
+      //Bidirectional grpc
       //Quotes chat feature
       console.log("Chatbot")
       console.log("Relax and chat with historys greatest minds")
       console.log("Type 'exit' to return to menu\n")
+      //Initialise a Bidirectional Streaming rpc to chatService using grpc method chat
       const chatStream = chatClient.chat()
 
-      loop = true
+      loop = true //assign loop boolean value true
       try {
-        while(loop)
+        while(loop) //continuously loop while loop is true
           await chatMessage(chatStream)
-          chatStream.end()
+          chatStream.end() //end the stream
           await getAllRooms() //clears out blocking function
       } catch(err) {
         //console.log(err)
@@ -351,87 +364,101 @@ async function main() {
 
 }
 
-
-async function createRoom(roomName) {
+//Asynchronous function createRoom 
+//Unary grpc call
+async function createRoom(roomName) { //takes String roomName as parameter
+  //initialise a promise to handle asynchronous operations
   return new Promise((resolve, reject) => {
+    //call createRoom method from roomService client, passing in roomName as the name message
     client.createRoom({name: roomName}, (err, res) => {
-      if(err) reject (err)
-      else resolve(res)
+      if(err) reject (err) //if an error occurs reject the promise
+      else resolve(res) //else resolve with response
     })
   })
   
 }
 
-async function chatMessage(stream) {
+//Asynchronous funciton chatMessage
+//Bidirectional Streaming
+async function chatMessage(stream) { //takes a parameter called stream
+  //initialise a promise to handle asynchronous operations
   return new Promise((resolve, reject) => {
-      let clientMsg = readlineSync.question("Client: ")
-      if(clientMsg == "exit") {
-        resolve()
-        loop = false
-        return
+      let clientMsg = readlineSync.question("Client: ") //assign user input to clientMsg using readlineSync question method
+      if(clientMsg == "exit") { //if user types exit - exit the loop
+        resolve() //resolve the promise
+        loop = false //exit the while loop by setting loop to false
+        return //end of function
       }
-      try {
-        stream.write( { message: clientMsg} )
+      try { //try block
+        stream.write( { message: clientMsg} ) //send to bidirectional stream - argument is the user input send as a String
       
-        stream.once('data', message => {
-          console.log("Server: ", message.message)
-          resolve()
+        stream.once('data', message => { //receive data from bidirectional stream - the data event
+          console.log("Server: ", message.message) //on receiving print the data
+          resolve() //resolve the promise
         })
       } catch(err) {
-        //console.error("Error occurred while sending message:", err.message)
-        //reject(err)
+        reject(err) //if an error occurs reject promise and pass err 
       }
-
   })
 }
 
-//Server streaming grpc call
+//Asynchronous function getRooms
+//Server Streaming grpc call
 async function getRooms() {
+  //initialise a promise to handle asynchronous operations
   return new Promise((resolve, reject) => {
-    const call = client.getRoomsStream()
-    const rooms = []
-    call.on('data', room => {
-      rooms.push(room)
+    const call = client.getRoomsStream() //create grpc call to get rooms stream
+    const rooms = [] //initialise array to store rooms
+
+    call.on('data', room => { //listen for data events 
+      rooms.push(room) //add room to rooms array on receiving data
     })
   
-    call.on('end', () => {
-      resolve(rooms)
+    call.on('end', () => { //listen for end of server stream event
+      resolve(rooms) //resolve promise and return rooms
     })
 
-    call.on('error', err =>{
-      reject(err)
+    call.on('error', err =>{ //list for error event
+      reject(err) //reject promise and return error
     })
   })
-
 }
 
+
+//Asynchronous function getAllRooms
 async function getAllRooms() {
-  try {
+  try { //wrap getRooms in try catch block
     const rooms = await getRooms()
-    return rooms
-  } catch (err) {
-      console.error("An error occured in retreiving rooms")
+    return rooms //return rooms
+  } catch (err) { 
+      console.error("An error occured in retreiving rooms") //print error message on error
   }
 }
 
-function displayRooms(rooms) {
-  let index = 1
-  for(const room of rooms) {
+//Synchronous function display rooms
+function displayRooms(rooms) { //accepts rooms array
+  let index = 1 //assign index variable 1
+  for(const room of rooms) { //iterate through each room and print details
     console.log(index + " - " + room.name + "  Current Temp: " + room.currentTemp + " C" + " Target Temp: " + (room.targetTemp==-1?"none":room.targetTemp + " C"))
-    index++
+    //dispay index number, current temperature, target temperature depending on if the value is not -1
+    index++ //increment index
   }
 }
 
+//Asynchronous function setTemp
+//Unary grpc call
 async function setTemp(roomName, temp) {
+  //initialise a promise to handle asynchronous operations
   return new Promise((resolve, reject) => {
-
+    // call the setTempRoom method on temperatureClient, passing roomName and temp
     temperatureClient.setTempRoom({name: roomName.toString(), targetTemp: temp}, (err, res) => {
-      if(err) {
-        console.error('Error setting temperature', err)
-        reject(err)
-      } else {
-        console.log("Temperature set successfully")
-        resolve(res)
+      //callback function
+      if(err) { //if error 
+        console.error('Error setting temperature', err) //print error message
+        reject(err) //reject promise send error
+      } else { //else
+        console.log("Temperature set successfully") //print success message
+        resolve(res) //resolve promise send response
       }
     })
   })
