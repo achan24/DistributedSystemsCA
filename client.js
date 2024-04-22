@@ -1,5 +1,5 @@
 /*
- * server.js
+ * client.js
  * Author: Albert Chan
  * Date: 19/04/2024
  * Description: Functionality for connecting new rooms, setting temperatures for individual rooms or all rooms simultaneously, displaying room information, and enabling a chat feature with a chatbot using grpc and the four types of grpc.
