@@ -475,7 +475,6 @@ function setRoomsSameTemp(temp, rooms) { //accepts temperature and rooms array a
         console.error('Error:', err) //print error message
     })
     
-
     //iterate through each room
     rooms.forEach(room => {
 
@@ -488,16 +487,12 @@ function setRoomsSameTemp(temp, rooms) { //accepts temperature and rooms array a
       stream.write(data) //write the message to the stream - sending to server
 
     })
-
     stream.end() //close the stream from the client side
     
-
   } catch(err) { //if an error is caught
     console.error(err) //print error message
   }
-
 }
-
 
 main() //call main function
 
